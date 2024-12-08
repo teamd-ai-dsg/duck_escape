@@ -10,16 +10,16 @@ class MainGame(object):
     
     screen_width = 900
     screen_height = 720
-    tank_p1 = None
+    duck_p1 = None
     window = None
-    enemy_tank_list = []
-    enemtank_count = 3
+    enemy_snake_list = []
+    enemsnake_count = 3
     bullet_list = []
-    enemytank_bullet_list = []
+    enemysnake_bullet_list = []
     explode_list = []
     wall_list = []
-    enemy_tank_counter = 0
-    enemy_tank_killed = 0
+    enemy_snake_counter = 0
+    enemy_snake_killed = 0
 
     def startgame(self):
 
@@ -36,21 +36,21 @@ class MainGame(object):
             MainGame.window.fill(pygame.Color(0, 0, 0))
             self.get_event()
             self.blit_walls()
-            if MainGame.tank_p1 and MainGame.tank_p1.alive:
-                MainGame.tank_p1.display_tank()
-            MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_tank_list)), (7, 7))
-            #MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_tank_list)), (7, 7))
+            if MainGame.duck_p1 and MainGame.duck_p1.alive:
+                MainGame.duck_p1.display_tank()
+            MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_snake_list)), (7, 7))
+            #MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_snake_list)), (7, 7))
 
             self.blit_walls()
-            if MainGame.tank_p1 and MainGame.tank_p1.alive:
-                MainGame.tank_p1.display_tank()
+            if MainGame.duck_p1 and MainGame.duck_p1.alive:
+                MainGame.duck_p1.display_tank()
 
             self.blit_enemy_snake()
 
-            if MainGame.tank_p1 and not MainGame.tank_p1.stop:
-                MainGame.tank_p1.move()
-                MainGame.tank_p1.hit_wall()
-                MainGame.tank_p1.hit_enemy_snake()
+            if MainGame.duck_p1 and not MainGame.duck_p1.stop:
+                MainGame.duck_p1.move()
+                MainGame.duck_p1.hit_wall()
+                MainGame.duck_p1.hit_enemy_snake()
 
             self.blit_enemy_bullet()
             self.blit_bullet()
@@ -59,7 +59,7 @@ class MainGame(object):
             _display.update()
             self.blit_enemy_snake()
 
-            if len(MainGame.enemy_tank_list) == 0 and MainGame.enemy_tank_counter == 2:
+            if len(MainGame.enemy_snake_list) == 0 and MainGame.enemy_snake_counter == 2:
                 GAMEOVER = True
                 self.game_over("You Won!!!")
                 pygame.quit()
@@ -67,19 +67,19 @@ class MainGame(object):
         pygame.quit()
 
     def create_my_duck(self):
-        MainGame.tank_p1 = MyTank(420, 660, 0)
+        MainGame.duck_p1 = MyTank(420, 660, 0)
         global player_pos
         player_pos = [420, 660]
 
     def create_enemy_snake(self):
         top = 0
 
-        for i in range(MainGame.enemtank_count):
+        for i in range(MainGame.enemsnake_count):
             speed = random.randint(1, 3) #// 2
             odd_numbers = [x for x in range(0, 6) if x % 2 == 1]
             left = np.random.choice(odd_numbers)
             etank = EnemyTank(left * 60, top, speed, 1)
-            MainGame.enemy_tank_list.append(etank)
+            MainGame.enemy_snake_list.append(etank)
 
     def create_walls(self):
         with open("world.txt", "r") as f:
@@ -99,7 +99,7 @@ class MainGame(object):
                 MainGame.wall_list.remove(wall)
 
     def blit_enemy_snake(self):
-        for etank in MainGame.enemy_tank_list:
+        for etank in MainGame.enemy_snake_list:
             if etank.live:
                 etank.display_tank()
                 etank.direction = etank.next_random_direction() 
@@ -109,30 +109,30 @@ class MainGame(object):
                 ebullet = etank.shot()
 
                 if ebullet:
-                    MainGame.enemytank_bullet_list.append(ebullet)
+                    MainGame.enemysnake_bullet_list.append(ebullet)
             else:
-                MainGame.enemy_tank_list.remove(etank)
-                if MainGame.enemy_tank_counter < 2:
+                MainGame.enemy_snake_list.remove(etank)
+                if MainGame.enemy_snake_counter < 2:
                     top = 0
                     speed = random.randint(1, 3)  # // 2
                     odd_numbers = [x for x in range(0, 6) if x % 2 == 1]
                     left = np.random.choice(odd_numbers)
                     new_etank = EnemyTank(left * 60, top, speed, 1)
-                    MainGame.enemy_tank_list.append(new_etank)
-                    MainGame.enemy_tank_counter += 1
+                    MainGame.enemy_snake_list.append(new_etank)
+                    MainGame.enemy_snake_counter += 1
 
     def blit_enemy_bullet(self):
-        for ebullet in MainGame.enemytank_bullet_list:
+        for ebullet in MainGame.enemysnake_bullet_list:
             if ebullet.alive:
                 ebullet.display_bullet()
                 ebullet.bullet_move()
                 ebullet.hit_walls()
-                if MainGame.tank_p1.alive:
+                if MainGame.duck_p1.alive:
                     ebullet.hit_my_duck()
                 else:
                     self.respawn_my_duck()
             else:
-                MainGame.enemytank_bullet_list.remove(ebullet)
+                MainGame.enemysnake_bullet_list.remove(ebullet)
 
     def blit_bullet(self):
         for bullet in MainGame.bullet_list:
@@ -166,8 +166,8 @@ class MainGame(object):
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT or event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-                    if MainGame.tank_p1 and MainGame.tank_p1.alive:
-                        MainGame.tank_p1.stop = True
+                    if MainGame.duck_p1 and MainGame.duck_p1.alive:
+                        MainGame.duck_p1.stop = True
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -175,31 +175,31 @@ class MainGame(object):
                     self.game_over()
                     #self.create_my_duck()
 
-                if MainGame.tank_p1 and MainGame.tank_p1.alive:
+                if MainGame.duck_p1 and MainGame.duck_p1.alive:
                     if event.key == pygame.K_LEFT:
-                        MainGame.tank_p1.direction = "l"
-                        MainGame.tank_p1.stop = False
+                        MainGame.duck_p1.direction = "l"
+                        MainGame.duck_p1.stop = False
 
                     if event.key == pygame.K_RIGHT:
-                        MainGame.tank_p1.direction = "r"
-                        MainGame.tank_p1.stop = False
+                        MainGame.duck_p1.direction = "r"
+                        MainGame.duck_p1.stop = False
 
                     if event.key == pygame.K_UP:
-                        MainGame.tank_p1.direction = "u"
-                        MainGame.tank_p1.stop = False
+                        MainGame.duck_p1.direction = "u"
+                        MainGame.duck_p1.stop = False
 
                     if event.key == pygame.K_DOWN:
-                        MainGame.tank_p1.direction = "d"
-                        MainGame.tank_p1.stop = False
+                        MainGame.duck_p1.direction = "d"
+                        MainGame.duck_p1.stop = False
 
                     if event.key == pygame.K_SPACE:
                         if len(MainGame.bullet_list) < 3:
-                            m = Bullet(MainGame.tank_p1)
+                            m = Bullet(MainGame.duck_p1)
                             MainGame.bullet_list.append(m)
     
     def respawn_my_duck(self):
-        if not MainGame.tank_p1.alive:
-            MainGame.tank_p1 = MyTank(420, 660, 0)
+        if not MainGame.duck_p1.alive:
+            MainGame.duck_p1 = MyTank(420, 660, 0)
             player_pos = [420, 660]
 
     def game_over(self, message):
@@ -242,13 +242,13 @@ class Tank(BaseItem):
             if self.rect.top > 0:
                 self.rect.top -= self.speed
         elif self.direction == "d":
-            if self.rect.top < MainGame.screen_height - MainGame.tank_p1.rect.height:
+            if self.rect.top < MainGame.screen_height - MainGame.duck_p1.rect.height:
                 self.rect.top += self.speed
         elif self.direction == "l":
             if self.rect.left > 0:
                 self.rect.left -= self.speed
         elif self.direction == "r":
-            if self.rect.left < MainGame.screen_width - MainGame.tank_p1.rect.width:
+            if self.rect.left < MainGame.screen_width - MainGame.duck_p1.rect.width:
                 self.rect.left += self.speed
 
         if self.isPlayer == 0:
@@ -280,7 +280,7 @@ class MyTank(Tank):
         super(MyTank, self).__init__(left, top, determination)
 
     def hit_enemy_snake(self):
-        for e_tank in MainGame.enemy_tank_list:
+        for e_tank in MainGame.enemy_snake_list:
             if pygame.sprite.collide_rect(e_tank, self):
                 self.stay()
 
@@ -399,7 +399,7 @@ class EnemyTank(Tank):
         return None
 
     def hit_my_duck(self):
-        if pygame.sprite.collide_rect(self, MainGame.tank_p1):
+        if pygame.sprite.collide_rect(self, MainGame.duck_p1):
             self.stay()
 
 class Bullet(BaseItem):
@@ -448,7 +448,7 @@ class Bullet(BaseItem):
                 self.alive = False
 
     def hit_enemy_snake(self):
-        for e_tank in MainGame.enemy_tank_list:
+        for e_tank in MainGame.enemy_snake_list:
             if pygame.sprite.collide_rect(e_tank, self):
                 explode = Explode(e_tank)
                 MainGame.explode_list.append(explode)
@@ -456,10 +456,10 @@ class Bullet(BaseItem):
                 e_tank.live = False
 
     def hit_my_duck(self):
-        if pygame.sprite.collide_rect(self, MainGame.tank_p1):
-            explode = Explode(MainGame.tank_p1)
+        if pygame.sprite.collide_rect(self, MainGame.duck_p1):
+            explode = Explode(MainGame.duck_p1)
             MainGame.explode_list.append(explode)
-            MainGame.tank_p1.alive = False
+            MainGame.duck_p1.alive = False
             self.alive = False
 
     def hit_walls(self):
