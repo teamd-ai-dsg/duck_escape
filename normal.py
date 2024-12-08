@@ -13,7 +13,7 @@ class MainGame(object):
     tank_p1 = None
     window = None
     enemy_tank_list = []
-    enemtank_count = 5
+    enemtank_count = 3
     bullet_list = []
     enemytank_bullet_list = []
     explode_list = []
@@ -25,47 +25,53 @@ class MainGame(object):
 
         pygame.display.init()
         MainGame.window = _display.set_mode([MainGame.screen_width, MainGame.screen_height])
-        pygame.display.set_caption("BATTLE CITY")
+        pygame.display.set_caption("DUCK ESCAPE")
         global player_pos
-        self.create_my_tank()
-        self.create_enemy_tank()
+        self.create_my_duck()
+        self.create_enemy_snake()
         self.create_walls()
         global GAMEOVER
 
         while not GAMEOVER:
             MainGame.window.fill(pygame.Color(0, 0, 0))
             self.get_event()
+            self.blit_walls()
+            if MainGame.tank_p1 and MainGame.tank_p1.alive:
+                MainGame.tank_p1.display_tank()
             MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_tank_list)), (7, 7))
+            #MainGame.window.blit(self.draw_text("Enemy Remains:%d" % len(MainGame.enemy_tank_list)), (7, 7))
 
             self.blit_walls()
             if MainGame.tank_p1 and MainGame.tank_p1.alive:
                 MainGame.tank_p1.display_tank()
 
-            self.blit_enemy_tank()
+            self.blit_enemy_snake()
 
             if MainGame.tank_p1 and not MainGame.tank_p1.stop:
                 MainGame.tank_p1.move()
                 MainGame.tank_p1.hit_wall()
-                MainGame.tank_p1.hit_enemy_tank()
+                MainGame.tank_p1.hit_enemy_snake()
 
             self.blit_enemy_bullet()
             self.blit_bullet()
             self.blit_explode()
             time.sleep(0.02)
             _display.update()
-            self.blit_enemy_tank()
+            self.blit_enemy_snake()
 
-            if len(MainGame.enemy_tank_list) == 0 and MainGame.enemy_tank_counter == 20:
+            if len(MainGame.enemy_tank_list) == 0 and MainGame.enemy_tank_counter == 2:
                 GAMEOVER = True
+                self.game_over("You Won!!!")
+                pygame.quit()
 
         pygame.quit()
 
-    def create_my_tank(self):
+    def create_my_duck(self):
         MainGame.tank_p1 = MyTank(420, 660, 0)
         global player_pos
         player_pos = [420, 660]
 
-    def create_enemy_tank(self):
+    def create_enemy_snake(self):
         top = 0
 
         for i in range(MainGame.enemtank_count):
@@ -92,21 +98,21 @@ class MainGame(object):
             else:
                 MainGame.wall_list.remove(wall)
 
-    def blit_enemy_tank(self):
+    def blit_enemy_snake(self):
         for etank in MainGame.enemy_tank_list:
             if etank.live:
                 etank.display_tank()
-                etank.direction = etank.next_flanking_direction()  # Update direction more frequently
+                etank.direction = etank.next_random_direction() 
                 etank.move()
                 etank.hit_wall()
-                etank.hit_my_tank()
+                etank.hit_my_duck()
                 ebullet = etank.shot()
 
                 if ebullet:
                     MainGame.enemytank_bullet_list.append(ebullet)
             else:
                 MainGame.enemy_tank_list.remove(etank)
-                if MainGame.enemy_tank_counter < 20:
+                if MainGame.enemy_tank_counter < 2:
                     top = 0
                     speed = random.randint(1, 3)  # // 2
                     odd_numbers = [x for x in range(0, 6) if x % 2 == 1]
@@ -122,9 +128,9 @@ class MainGame(object):
                 ebullet.bullet_move()
                 ebullet.hit_walls()
                 if MainGame.tank_p1.alive:
-                    ebullet.hit_my_tank()
+                    ebullet.hit_my_duck()
                 else:
-                    self.respawn_my_tank()
+                    self.respawn_my_duck()
             else:
                 MainGame.enemytank_bullet_list.remove(ebullet)
 
@@ -133,7 +139,7 @@ class MainGame(object):
             if bullet.alive:
                 bullet.display_bullet()
                 bullet.bullet_move()
-                bullet.hit_enemy_tank()
+                bullet.hit_enemy_snake()
                 bullet.hit_walls()
             else:
                 MainGame.bullet_list.remove(bullet)
@@ -167,7 +173,7 @@ class MainGame(object):
                 if event.key == pygame.K_ESCAPE:
                     print("Quit")
                     self.game_over()
-                    #self.create_my_tank()
+                    #self.create_my_duck()
 
                 if MainGame.tank_p1 and MainGame.tank_p1.alive:
                     if event.key == pygame.K_LEFT:
@@ -191,13 +197,18 @@ class MainGame(object):
                             m = Bullet(MainGame.tank_p1)
                             MainGame.bullet_list.append(m)
     
-    def respawn_my_tank(self):
+    def respawn_my_duck(self):
         if not MainGame.tank_p1.alive:
             MainGame.tank_p1 = MyTank(420, 660, 0)
             player_pos = [420, 660]
 
-    def game_over(self):
-        exit()
+    def game_over(self, message):
+        font = pygame.font.SysFont("arial", 48)
+        text = font.render(message, True, color_red)
+        text_rect = text.get_rect(center=(MainGame.screen_width // 2, MainGame.screen_height // 2))
+        MainGame.window.blit(text, text_rect)
+        pygame.display.update()
+        time.sleep(3)  # Pause for 3 seconds to show the message
 
 class BaseItem(pygame.sprite.Sprite):
     def __init__(self):
@@ -268,7 +279,7 @@ class MyTank(Tank):
     def __init__(self, left, top, determination):
         super(MyTank, self).__init__(left, top, determination)
 
-    def hit_enemy_tank(self):
+    def hit_enemy_snake(self):
         for e_tank in MainGame.enemy_tank_list:
             if pygame.sprite.collide_rect(e_tank, self):
                 self.stay()
@@ -292,14 +303,14 @@ class EnemyTank(Tank):
         self.stop = True
         self.step = 1
         self.live = True
-        self.direction = self.next_flanking_direction()
+        self.direction = self.next_random_direction()
         self.shot_counter = 0
         self.shot_delay = random.randint(30, 100)
     
     def distance(self, pos1, pos2):
         return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
     
-    def next_flanking_direction(self):
+    def next_random_direction(self):
 
         if random.random() < 0.6:
             return self.charge()
@@ -387,7 +398,7 @@ class EnemyTank(Tank):
     
         return None
 
-    def hit_my_tank(self):
+    def hit_my_duck(self):
         if pygame.sprite.collide_rect(self, MainGame.tank_p1):
             self.stay()
 
@@ -436,7 +447,7 @@ class Bullet(BaseItem):
             else:
                 self.alive = False
 
-    def hit_enemy_tank(self):
+    def hit_enemy_snake(self):
         for e_tank in MainGame.enemy_tank_list:
             if pygame.sprite.collide_rect(e_tank, self):
                 explode = Explode(e_tank)
@@ -444,7 +455,7 @@ class Bullet(BaseItem):
                 self.alive = False
                 e_tank.live = False
 
-    def hit_my_tank(self):
+    def hit_my_duck(self):
         if pygame.sprite.collide_rect(self, MainGame.tank_p1):
             explode = Explode(MainGame.tank_p1)
             MainGame.explode_list.append(explode)
@@ -498,32 +509,28 @@ class Waypoint:
     def distance(self, other):
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 
-def a_star_pathfinding(start, end, waypoints):
-    def heuristic(a, b):
-        return a.distance(b)
+from collections import deque
 
-    open_set = [(0, start, [])]
-    closed_set = set()
+def bfs_pathfinding(self, start, end, waypoints):
+    queue = deque([(start, [start])])  # (current_node, path)
+    visited = set()
 
-    while open_set:
-        _, current, path = heapq.heappop(open_set)
+    while queue:
+        current, path = queue.popleft()
 
         if current == end:
-            return path
+            return path  # Return the path when the end is reached
 
-        if current in closed_set:
+        if current in visited:
             continue
 
-        closed_set.add(current)
+        visited.add(current)
 
         for waypoint in waypoints:
-            if waypoint in closed_set:
-                continue
+            if waypoint not in visited:
+                queue.append((waypoint, path + [waypoint]))
 
-            tentative_g_score = current.distance(waypoint)
-            f_score = tentative_g_score + heuristic(waypoint, end)
-            heapq.heappush(open_set, (f_score, waypoint, path + [waypoint]))
+    return None  
 
-    return None  # No path found
  
 MainGame().startgame()
